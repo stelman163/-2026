@@ -1013,7 +1013,8 @@
         });
         
         // ========== КОНФИГУРАЦИЯ АНКЕТЫ ==========
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_N3s31NXqv0wqt57_9WpmcFb5KGUuJ31oCuUk1DED-oqI0M02NcSzogYFM8qb3a2c/exec';
+        // НОВЫЙ URL СКРИПТА (ОБНОВЛЁН)
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJHWQ5_EHw__F3yaa5Ja9lPdfPBm4Pa3a_v_GAOPGImf8EjvvXCBAM_tKexPHas9bY/exec';
         
         let isSubmitted = false;
         let isLocked = false;
@@ -1132,7 +1133,6 @@
             resetSubmitButtonText();
         }
         
-        // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ ==========
         async function sendToGoogleSheets(isEdit=false) {
             const submitBtn = document.getElementById('submitButton');
             const submitText = document.getElementById('submitText');
@@ -1179,7 +1179,6 @@
             };
             
             try {
-                // ИСПРАВЛЕНИЕ: убираем mode: 'no-cors' и правильно формируем запрос
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'cors',
