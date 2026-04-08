@@ -1132,6 +1132,7 @@
             resetSubmitButtonText();
         }
         
+        // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ ==========
         async function sendToGoogleSheets(isEdit=false) {
             const submitBtn = document.getElementById('submitButton');
             const submitText = document.getElementById('submitText');
@@ -1178,18 +1179,33 @@
             };
             
             try {
-                await fetch(GOOGLE_SCRIPT_URL, {
+                // ИСПРАВЛЕНИЕ: убираем mode: 'no-cors' и правильно формируем запрос
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    mode: 'cors',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(payload)
                 });
                 
-                const statusDiv = document.getElementById('telegramStatus');
-                statusDiv.innerHTML = `✅ Ответ отправлен`;
-                statusDiv.style.color = 'var(--sage)';
+                const result = await response.json();
+                console.log('Ответ от сервера:', result);
                 
-                return true;
+                const statusDiv = document.getElementById('telegramStatus');
+                
+                if (result.status === 'success') {
+                    statusDiv.innerHTML = `✅ Ответ отправлен`;
+                    statusDiv.style.color = 'var(--sage)';
+                    return true;
+                } else {
+                    statusDiv.innerHTML = `❌ Ошибка: ${result.message || 'Неизвестная ошибка'}`;
+                    statusDiv.style.color = '#ff6b6b';
+                    submitBtn.disabled = false;
+                    submitText.innerHTML = isPresent ? 'ВНЕСТИ В СПИСОК ГЕРОЕВ' : 'НАПИСАТЬ В ТИТРАХ';
+                    submitBtn.style.animation = '';
+                    return false;
+                }
             } catch(e) {
                 console.error('Ошибка отправки:', e);
                 const statusDiv = document.getElementById('telegramStatus');
