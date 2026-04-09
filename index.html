@@ -1182,15 +1182,23 @@
             document.getElementById('telegramStatus').innerHTML = `✅ Отправлено`;
             document.getElementById('telegramStatus').style.color = 'var(--sage)';
             
-            if(!endTime) endTime = new Date().getTime() + (24 * 60 * 60 * 1000);
+            // НЕ создаём новый endTime, если он уже есть
+            if(!endTime) {
+                endTime = new Date().getTime() + (24 * 60 * 60 * 1000);
+            }
+            // Если endTime уже есть - используем его (продолжаем таймер)
+            
             isSubmitted = true;
             
             document.getElementById('gentName').disabled = true;
             document.getElementById('ladyName').disabled = true;
             document.getElementById('absentName').disabled = true;
             document.getElementById('submitButton').disabled = true;
+            
+            // ПОКАЗЫВАЕМ таймер, кнопку и текст (если они были скрыты)
             document.getElementById('timerContainer').classList.remove('hidden');
             document.getElementById('cancelButton').classList.remove('hidden');
+            document.getElementById('timerText').classList.remove('hidden');
             
             if(!timerInterval) timerInterval = setInterval(updateCountdownTimer, 1000);
             updateSubmitButtonAfterSubmit(isPresent);
@@ -1289,12 +1297,10 @@
                 isLocked = st.isLocked || false;
                 
                 if(st.formData) {
-                    // Восстанавливаем текстовые поля
                     document.getElementById('gentName').value = st.formData.gentName || '';
                     document.getElementById('ladyName').value = st.formData.ladyName || '';
                     document.getElementById('absentName').value = st.formData.absentName || '';
                     
-                    // Восстанавливаем выбор напитков
                     const gentDrinkText = st.formData.gentDrink || 'Ваш литературный жанр?';
                     const ladyDrinkText = st.formData.ladyDrink || 'Ваше идеальное послесловие?';
                     document.querySelector('#customSelectGent .select-header span:first-child').textContent = gentDrinkText;
@@ -1311,11 +1317,9 @@
                         updateQuoteByValue('lady', ladyValue);
                     }
                     
-                    // ВАЖНО: Восстанавливаем выбор attendance (вкладку)
                     const attendanceValue = st.formData.attendance || 'yes';
                     document.querySelector(`input[name="attendance"][value="${attendanceValue}"]`).checked = true;
                     
-                    // Принудительно обновляем видимость вкладок
                     if (attendanceValue === 'yes') {
                         document.getElementById('attendanceYes').classList.remove('section-hidden');
                         document.getElementById('attendanceNo').classList.add('section-hidden');
@@ -1327,7 +1331,6 @@
                     }
                 }
                 
-                // Если ответ уже был отправлен, блокируем форму
                 if(isSubmitted) {
                     console.log('Форма была отправлена ранее, блокируем');
                     document.getElementById('formCard').classList.add('form-disabled');
@@ -1343,15 +1346,16 @@
                         radio.disabled = true;
                     });
                     
-                    // Показываем таймер если нужно
                     if(endTime && new Date().getTime() < endTime) {
                         document.getElementById('timerContainer').classList.remove('hidden');
                         document.getElementById('cancelButton').classList.remove('hidden');
+                        document.getElementById('timerText').classList.remove('hidden');
                         if(!timerInterval) timerInterval = setInterval(updateCountdownTimer, 1000);
                     } else if(endTime && new Date().getTime() >= endTime) {
                         isLocked = true;
                         document.getElementById('timerContainer').classList.add('hidden');
                         document.getElementById('cancelButton').classList.add('hidden');
+                        document.getElementById('timerText').classList.add('hidden');
                     }
                     
                     const isPresent = document.querySelector('input[name="attendance"]:checked').value === 'yes';
@@ -1366,12 +1370,15 @@
         function cancelSubmission() {
             if(!isSubmitted || isLocked) return;
             
-            resetForm();
-            isSubmitted = false;
-            isLocked = false;
-            endTime = null;
-            guestResponseNumber = null;
+            // НЕ останавливаем таймер! Он продолжает идти
+            // Таймер продолжает тикать, так как 24 часа с первой отправки не остановились
             
+            resetForm();
+            isSubmitted = false;  // Снимаем флаг отправки, чтобы можно было редактировать
+            isLocked = false;
+            // НЕ обнуляем endTime! Таймер продолжает идти
+            
+            // Разблокируем поля для редактирования
             document.getElementById('gentName').disabled = false;
             document.getElementById('ladyName').disabled = false;
             document.getElementById('absentName').disabled = false;
@@ -1385,17 +1392,22 @@
             
             document.getElementById('submitButton').disabled = false;
             document.getElementById('formCard').classList.remove('form-disabled');
-            document.getElementById('timerContainer').classList.add('hidden');
+            
+            // ТАЙМЕР ОСТАЁТСЯ ВИДИМЫМ И ПРОДОЛЖАЕТ ИДТИ
+            // НО кнопка "✏️ Изменить выбор" СКРЫВАЕТСЯ
             document.getElementById('cancelButton').classList.add('hidden');
+            // Текст "Ваш ответ зафиксирован..." тоже СКРЫВАЕТСЯ
+            document.getElementById('timerText').classList.add('hidden');
             
-            localStorage.removeItem('weddingFormState');
-            localStorage.removeItem('guestResponseMap');
-            localStorage.removeItem('lastResponseNumber');
+            // Меняем текст кнопки обратно на "ВНЕСТИ В СПИСОК ГЕРОЕВ"
+            resetSubmitButtonText();
             
+            // Очищаем статус отправки
             const statusDiv = document.getElementById('telegramStatus');
-            statusDiv.innerHTML = '✏️ Анкета очищена. Заполните заново';
+            statusDiv.innerHTML = '✏️ Редактирование. Отправьте заново до истечения времени';
             statusDiv.style.color = 'var(--sage)';
             
+            // Обновляем сохранение (без удаления endTime!)
             saveState();
         }
         
@@ -1415,6 +1427,7 @@
                 document.getElementById('submitButton').disabled = true;
                 document.getElementById('timerContainer').classList.add('hidden');
                 document.getElementById('cancelButton').classList.add('hidden');
+                document.getElementById('timerText').classList.add('hidden');
                 
                 document.querySelectorAll('.select-header').forEach(header => {
                     header.style.pointerEvents = 'none';
